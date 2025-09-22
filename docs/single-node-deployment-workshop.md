@@ -16,7 +16,7 @@ Let's get started, please go through the instructions carefully
 Each individual can pick one and make sure no more than one person using same USER instances:
 These links will take you to VSCode in browser with login page
 
-[USER_1](http://44.247.225.244:8080/)       
+[USER_1](http://34.217.82.40:8080/)       
     
 **NOTE: Each instance having login page with default password mentinoed in the login page itself**
 <!-- ![<img src="pictures/codeserver_terminal.png" width="400" height="350"/>] -->
