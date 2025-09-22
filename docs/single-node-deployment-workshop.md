@@ -68,9 +68,9 @@ Now, you can run the automation using your configured file.
 cd core
 chmod +x inference-stack-deploy.sh
 ```
-Export your huggingface token as environment variable. Make sure to replace "Your_Hugging_Face_Token_ID" with actual Hugging Face Token.
+Export your huggingface token as environment variable. Make sure to replace "Your_Hugging_Face_Token_ID" with your actual Hugging Face Token.
 
-**NOTE:** you can use temp token as "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"
+**NOTE:** you should create account in HuggingFace and use the access token from that account
 ```
 export HUGGINGFACE_TOKEN=<<Your_Hugging_Face_Token_ID>>
 ```
