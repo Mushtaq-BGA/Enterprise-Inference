@@ -159,7 +159,7 @@ langfuse_password corresponds to langfuse password in vault.yml file
 **To test on CPU Inference with lobehub client follow below steps:**
 
 open below url in browser       
-https://chat-preview.lobehub.com/settings/provider/openai         
+https://chat-preview.lobehub.com/settings?active=provider&tab=chat&provider=openai         
 API proxy URL - `http://<ip_address>:<genai-gateway-service-port>`            
 API Key - your Litellm key/master
 
