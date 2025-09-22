@@ -162,6 +162,6 @@ open below url in browser
 https://chat-preview.lobehub.com/settings/provider/openai         
 API proxy URL - `http://<ip_address>:<genai-gateway-service-port>`            
 API Key - your Litellm key/master
-![alt text](image.png)
+<img src="pictures/lobechat.png" width="500" height="400"/>
 
 
