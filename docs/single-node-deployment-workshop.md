@@ -70,7 +70,7 @@ chmod +x inference-stack-deploy.sh
 ```
 Export your huggingface token as environment variable. Make sure to replace "Your_Hugging_Face_Token_ID" with actual Hugging Face Token.
 
-**NOTE:** you can use temp token as "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"
+**NOTE:** you can use temp token as "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"
 ```
 export HUGGINGFACE_TOKEN=<<Your_Hugging_Face_Token_ID>>
 ```
