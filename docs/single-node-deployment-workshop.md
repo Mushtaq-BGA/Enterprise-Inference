@@ -12,11 +12,8 @@ Before running the EI stack automation, we need to have access to Intel Xeon/Gau
 
 Let's get started, please go through the instructions carefully
 
-### Step 1: Each user will be provided with links named USER_1, USER_2 and so on.  
-Each individual can pick one and make sure no more than one person using same USER instances:
-These links will take you to VSCode in browser with login page
-
-[USER_1](http://34.217.82.40:8080/)       
+### Step 1: Each user will be provided with EC2 instances.  
+The people participating in can share the email id and the EC2 instance will be allocated      
     
 **NOTE: Each instance having login page with default password mentinoed in the login page itself**
 <!-- ![<img src="pictures/codeserver_terminal.png" width="400" height="350"/>] -->
