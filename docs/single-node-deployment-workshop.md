@@ -100,7 +100,7 @@ After the deployment is complete we can list pods and services to check if all a
 
 NOTE: some pods/services may take time to come up, hence wait till pods are up and Running
 
-### Step 6: Testing the Inference
+## Testing the Inference
 Once the installation is complete, open another terminal and run the following commands to test the successful deployment of Intel® AI for Enterprise Inference
 
 #### Accessing Models Deployed with GenAI Gateway
