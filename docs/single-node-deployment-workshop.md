@@ -5,6 +5,8 @@ This guide provides step-by-step instructions to deploy Intel® AI for Enterpris
 ## Prerequisites
 Before running the EI stack automation, we need to have access to Intel Xeon/Gaudi machine.
 
+Login to HuggingFace(https://huggingface.co) and keep Access Token saved
+
 **NOTE: For todays hands-on excercise we will be providing AWS EC2 instances for participants**
 
 ## EC2 instances
