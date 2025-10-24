@@ -1,0 +1,15 @@
+# Optional curated models file for LiteLLM registration.
+# Auto-discovery is enabled by default; set USE_MODELS_CONFIG=true or pass --config to deploy-phase4.sh to use this list instead.
+models:
+  - name: "qwen2-7b"
+    api_base: "https://REPLACE_WITH_QWEN_ENDPOINT/v1"
+    model_type: "openai"
+    litellm_params:
+      stream: true
+      max_retries: 3
+  - name: "openvino-sample"
+    api_base: "https://REPLACE_WITH_OPENVINO_ENDPOINT/v3"
+    model_type: "openvino"
+    litellm_params:
+      stream: true
+      timeout: 60

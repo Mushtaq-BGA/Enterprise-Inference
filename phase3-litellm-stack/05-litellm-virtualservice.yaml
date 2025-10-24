@@ -1,0 +1,81 @@
+---
+# Istio VirtualService for LiteLLM
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: litellm-vs
+  namespace: litellm
+spec:
+  hosts:
+  - "litellm.aistack.local"
+  gateways:
+  - istio-system/ai-stack-gateway
+  http:
+  - name: "litellm-routes"
+    match:
+    - uri:
+        prefix: /
+    corsPolicy:
+      allowOrigins:
+      - prefix: "*"
+      allowMethods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - OPTIONS
+      allowHeaders:
+      - authorization
+      - content-type
+      - x-requested-with
+      - x-api-key
+      allowCredentials: true
+      maxAge: "24h"
+    timeout: 600s
+    retries:
+      attempts: 3
+      perTryTimeout: 200s
+      retryOn: "5xx,reset,connect-failure,refused-stream"
+    route:
+    - destination:
+        host: litellm
+        port:
+          number: 4000
+      weight: 100
+    headers:
+      request:
+        set:
+          x-forwarded-proto: "https"
+      response:
+        add:
+          x-litellm-version: "production"
+---
+# DestinationRule for LiteLLM with connection pooling
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: litellm-dr
+  namespace: litellm
+spec:
+  host: litellm
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 1000
+      http:
+        http1MaxPendingRequests: 1000
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 100
+        maxRetries: 3
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_REQUEST
+      localityLbSetting:
+        enabled: true
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 60s
+      maxEjectionPercent: 50
+      minHealthPercent: 50

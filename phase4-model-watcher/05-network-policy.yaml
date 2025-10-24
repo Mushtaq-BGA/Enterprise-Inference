@@ -1,0 +1,44 @@
+---
+# NetworkPolicy for Model Watcher
+# Allow egress to Kubernetes API and KServe/LiteLLM
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: model-watcher
+  namespace: model-watcher
+spec:
+  podSelector:
+    matchLabels:
+      app: model-watcher
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow from same namespace only
+  - from:
+    - podSelector: {}
+  egress:
+  # Allow to Kubernetes API server
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 6443
+  # Allow to LiteLLM
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: litellm
+    ports:
+    - protocol: TCP
+      port: 4000
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53

@@ -1,0 +1,87 @@
+---
+# Knative Serving ConfigMap for autoscaling
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-autoscaler
+  namespace: knative-serving
+data:
+  # Enable scale-to-zero
+  enable-scale-to-zero: "true"
+  
+  # Scale to zero grace period (5 minutes)
+  scale-to-zero-grace-period: "5m"
+  
+  # Target concurrency per pod (10 concurrent requests per pod)
+  container-concurrency-target-default: "10"
+  
+  # Maximum scale (10 pods max for resource management)
+  max-scale: "10"
+  
+  # Minimum scale (0 = scale to zero)
+  min-scale: "0"
+  
+  # Panic window for rapid scaling
+  panic-window: "6s"
+  
+  # Panic threshold percentage
+  panic-threshold-percentage: "200"
+  
+  # Stable window for scaling decisions
+  stable-window: "60s"
+---
+# Knative Serving ConfigMap for domain
+# NOTE: Domain is dynamically set during deployment based on cluster DNS
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-domain
+  namespace: knative-serving
+data:
+  __CLUSTER_DOMAIN__: ""
+---
+# Knative Serving ConfigMap for network
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-network
+  namespace: knative-serving
+data:
+  ingress-class: "istio.ingress.networking.knative.dev"
+  namespace-wildcard-cert-selector: ""
+---
+# Knative Serving ConfigMap for deployment
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-deployment
+  namespace: knative-serving
+data:
+  # Queue proxy image pin for Knative Serving v1.19.4
+  queueSidecarImage: "gcr.io/knative-releases/knative.dev/serving/cmd/queue:v1.19.4"
+  registriesSkippingTagResolving: "ko.local,dev.local"
+
+  # Progress deadline
+  progress-deadline: "600s"
+---
+# Knative Serving ConfigMap for features
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-features
+  namespace: knative-serving
+data:
+  # Enable Kubernetes fieldRef
+  kubernetes.podspec-fieldref: "enabled"
+  
+  # Enable host networking
+  kubernetes.podspec-hostnetwork: "disabled"
+  
+  # Enable init containers
+  kubernetes.podspec-init-containers: "enabled"
+  
+  # Enable persistent volumes
+  kubernetes.podspec-volumes-emptydir: "enabled"
+  
+  # Enable Istio integration
+  istio-integration: "enabled"

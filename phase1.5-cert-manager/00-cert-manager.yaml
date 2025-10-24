@@ -1,0 +1,13 @@
+# cert-manager v1.15.3 installation
+# Provides automated TLS certificate management for Kubernetes
+# Used by Istio Gateway for public HTTPS endpoints
+
+---
+# Install cert-manager CRDs and core components
+# Source: https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cert-manager
+  labels:
+    cert-manager.io/disable-validation: "true"

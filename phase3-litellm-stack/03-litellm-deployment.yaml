@@ -1,0 +1,240 @@
+---
+# LiteLLM Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm
+  namespace: litellm
+  labels:
+    app: litellm
+spec:
+  type: ClusterIP
+  ports:
+  - port: 4000
+    targetPort: 4000
+    protocol: TCP
+    name: http
+  selector:
+    app: litellm
+---
+# LiteLLM Deployment with High Concurrency
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm
+  namespace: litellm
+  labels:
+    app: litellm
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: litellm
+  template:
+    metadata:
+      labels:
+        app: litellm
+        version: v1
+      annotations:
+        sidecar.istio.io/inject: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "4000"
+        prometheus.io/path: "/metrics"
+        traffic.sidecar.istio.io/excludeOutboundPorts: "5432,6379"
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - litellm
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: litellm
+        image: ghcr.io/berriai/litellm:main-latest
+        command:
+        - /bin/sh
+        - -c
+        args:
+        - |
+          # Derive worker count from explicit override or container CPU quota to keep memory bounded
+          WORKERS="${LITELLM_WORKERS:-2}"
+          if [ -f /sys/fs/cgroup/cpu.max ]; then
+            QUOTA=$(cut -d' ' -f1 /sys/fs/cgroup/cpu.max)
+            PERIOD=$(cut -d' ' -f2 /sys/fs/cgroup/cpu.max)
+            if [ "$QUOTA" != "max" ] && [ "$QUOTA" -gt 0 ] && [ "$PERIOD" -gt 0 ]; then
+              CPU_LIMIT=$(( (QUOTA + PERIOD - 1) / PERIOD ))
+              if [ "$CPU_LIMIT" -gt 0 ] && [ "$CPU_LIMIT" -lt "$WORKERS" ]; then
+                WORKERS="$CPU_LIMIT"
+              fi
+            fi
+          fi
+          if command -v nproc >/dev/null 2>&1; then
+            CORES=$(nproc)
+            if [ "$CORES" -lt "$WORKERS" ] && [ "$CORES" -gt 0 ]; then
+              WORKERS="$CORES"
+            fi
+          fi
+          echo "Starting LiteLLM with ${WORKERS} workers"
+          exec litellm --config /config/config.yaml --port 4000 --num_workers "$WORKERS"
+        ports:
+        - containerPort: 4000
+          name: http
+          protocol: TCP
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://litellm:L1teLLMdbP455w0rd2025@postgres.postgres.svc.ai-stack-cluster:5432/litellm?connection_limit=3&pool_timeout=10&connect_timeout=5"
+        # Prisma Memory Optimization
+        - name: PRISMA_CLIENT_ENGINE_TYPE
+          value: "binary"  # Use binary engine (lighter than library)
+        - name: PRISMA_QUERY_ENGINE_MEMORY
+          value: "512"  # Limit query engine memory to 512MB
+        - name: PRISMA_CLI_QUERY_ENGINE_TYPE
+          value: "binary"
+        # Python Memory Optimization
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: MALLOC_TRIM_THRESHOLD_
+          value: "100000"  # Aggressive memory return to OS (100KB threshold)
+        - name: MALLOC_MMAP_THRESHOLD_
+          value: "131072"  # Use mmap for allocations >128KB
+        - name: MALLOC_MMAP_MAX_
+          value: "65536"   # Max number of mmap regions
+        - name: REDIS_HOST
+          value: "redis.redis.svc.ai-stack-cluster"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: MASTER_KEY
+          value: "sk-52e2c3a5f98b4d5ca9d2e1327d6b41ef"
+        - name: LITELLM_MASTER_KEY
+          value: "sk-52e2c3a5f98b4d5ca9d2e1327d6b41ef"
+        - name: LITELLM_MODE
+          value: "PRODUCTION"
+        - name: LITELLM_SALT_KEY
+          value: "sk-litelm-salt-change-me"
+        - name: STORE_MODEL_IN_DB
+          value: "True"
+        - name: PORT
+          value: "4000"
+        - name: LITELLM_LOG
+          value: "ERROR"
+        - name: MAX_PARALLEL_REQUESTS
+          value: "1000"
+        - name: MAX_QUEUE_SIZE
+          value: "10000"
+        - name: QUEUE_TIMEOUT
+          value: "60"
+        - name: LITELLM_WORKERS
+          value: "2"
+        - name: DATABASE_POOL_SIZE
+          value: "5"
+        - name: DATABASE_MAX_OVERFLOW
+          value: "5"
+        - name: UI_USERNAME
+          value: "admin"
+        - name: UI_PASSWORD
+          value: "changeme"
+        volumeMounts:
+        - name: config
+          mountPath: /config
+          readOnly: true
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "2Gi"
+          limits:
+            cpu: "2000m"
+            memory: "6Gi"
+        livenessProbe:
+          httpGet:
+            path: /health/liveliness
+            port: 4000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health/readiness
+            port: 4000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /health/readiness
+            port: 4000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 30
+      volumes:
+      - name: config
+        configMap:
+          name: litellm-config
+---
+# HorizontalPodAutoscaler for LiteLLM
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: litellm-hpa
+  namespace: litellm
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: litellm
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 30
+      - type: Pods
+        value: 4
+        periodSeconds: 30
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 120
+      policies:
+      - type: Percent
+        value: 25
+        periodSeconds: 30
+      - type: Pods
+        value: 2
+        periodSeconds: 30
+      selectPolicy: Max
+---
+# PodDisruptionBudget for high availability
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: litellm-pdb
+  namespace: litellm
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: litellm

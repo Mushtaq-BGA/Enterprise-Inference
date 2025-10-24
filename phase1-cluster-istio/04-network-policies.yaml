@@ -1,0 +1,232 @@
+---
+# ⚠️  WARNING: NetworkPolicies are DISABLED by default in deploy-phase1.sh
+# 
+# REASON: The NetworkPolicies in this file have known issues:
+#   1. They block external model downloads from HuggingFace during KServe deployment
+#   2. Namespace label requirements (name=kube-system, etc.) are not set by default
+#   3. Egress rules need careful configuration to allow both cluster and external traffic
+#
+# TO ENABLE: 
+#   1. Uncomment "deploy_network_policies" in deploy-phase1.sh
+#   2. Add required namespace labels:
+#      kubectl label namespace kube-system name=kube-system
+#      kubectl label namespace knative-serving name=knative-serving
+#   3. Verify model downloads still work after applying
+#
+# RECOMMENDATION: Use Istio's mTLS and AuthorizationPolicies (already deployed)
+#                 for security instead of NetworkPolicies
+#
+---
+# NetworkPolicy for Istio Ingress Gateway
+# Allow external traffic to ingress, allow egress to services
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: istio-ingressgateway
+  namespace: istio-system
+spec:
+  podSelector:
+    matchLabels:
+      app: istio-ingressgateway
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow all external traffic to ingress gateway
+  - {}
+  egress:
+  # Allow egress to all pods (ingress needs to route to services)
+  - {}
+
+---
+# NetworkPolicy for LiteLLM
+# Allow ingress from Istio, egress to KServe/Postgres/Redis
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: litellm
+  namespace: litellm
+spec:
+  podSelector:
+    matchLabels:
+      app: litellm
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow from Istio ingress gateway
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+    ports:
+    - protocol: TCP
+      port: 4000
+  # Allow from same namespace (for health checks, etc.)
+  - from:
+    - podSelector: {}
+  egress:
+  # Allow to KServe namespace
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kserve
+  # Allow to Postgres
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: postgres
+    ports:
+    - protocol: TCP
+      port: 5432
+  # Allow to Redis
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# NetworkPolicy for KServe
+# Allow ingress from LiteLLM and Knative, allow model downloads
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kserve-predictor
+  namespace: kserve
+spec:
+  podSelector:
+    matchLabels:
+      component: predictor
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow from LiteLLM
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: litellm
+  # Allow from Knative/Istio
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: knative-serving
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+  # Allow from same namespace
+  - from:
+    - podSelector: {}
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow HTTPS for model downloads (HuggingFace, etc.) - external + internal
+  - ports:
+    - protocol: TCP
+      port: 443
+  # Allow HTTP for model downloads - external + internal
+  - ports:
+    - protocol: TCP
+      port: 80
+  # Allow to same namespace (all ports for internal communication)
+  - to:
+    - podSelector: {}
+
+---
+# NetworkPolicy for PostgreSQL
+# Allow ingress only from LiteLLM
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres
+  namespace: postgres
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow from LiteLLM
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: litellm
+    ports:
+    - protocol: TCP
+      port: 5432
+  # Allow from same namespace
+  - from:
+    - podSelector: {}
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow to same namespace
+  - to:
+    - podSelector: {}
+
+---
+# NetworkPolicy for Redis
+# Allow ingress only from LiteLLM
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis
+  namespace: redis
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow from LiteLLM
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: litellm
+    ports:
+    - protocol: TCP
+      port: 6379
+  # Allow from same namespace
+  - from:
+    - podSelector: {}
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow to same namespace
+  - to:
+    - podSelector: {}
+

@@ -1,0 +1,138 @@
+---
+# Enable STRICT mTLS across the entire mesh
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default-strict-mtls
+  namespace: istio-system
+spec:
+  mtls:
+    mode: STRICT
+---
+# STRICT mTLS for KServe namespace
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: kserve-strict-mtls
+  namespace: kserve
+spec:
+  mtls:
+    mode: STRICT
+---
+# mTLS policy for LiteLLM namespace
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: litellm-strict-mtls
+  namespace: litellm
+spec:
+  mtls:
+    mode: STRICT
+---
+# mTLS policy for Redis namespace
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: redis-strict-mtls
+  namespace: redis
+spec:
+  mtls:
+    mode: STRICT
+---
+# mTLS policy for Postgres namespace
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: postgres-strict-mtls
+  namespace: postgres
+spec:
+  mtls:
+    mode: STRICT
+---
+# Authorization Policy: Allow ingress gateway to reach all services
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-ingress-to-services
+  namespace: istio-system
+spec:
+  action: ALLOW
+  rules:
+  - to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+  - from:
+    - source:
+        principals:
+        - "cluster.local/ns/istio-system/sa/istio-ingressgateway"
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+---
+# Authorization Policy: Allow LiteLLM to call KServe models
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-litellm-to-kserve
+  namespace: kserve
+spec:
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["litellm"]
+    to:
+    - operation:
+        methods: ["GET", "POST"]
+---
+# Authorization Policy: Allow model-watcher to register models
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-watcher-to-litellm
+  namespace: litellm
+spec:
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["model-watcher"]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE"]
+  paths: ["/model/*", "/models", "/health", "/health/readiness"]
+# STRICT mTLS for model-watcher namespace
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: model-watcher-strict-mtls
+  namespace: model-watcher
+spec:
+  mtls:
+    mode: STRICT
+---
+# Authorization Policy: Allow LiteLLM to access Redis
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-litellm-to-redis
+  namespace: redis
+spec:
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["litellm"]
+---
+# Authorization Policy: Allow LiteLLM to access Postgres
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-litellm-to-postgres
+  namespace: postgres
+spec:
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["litellm"]

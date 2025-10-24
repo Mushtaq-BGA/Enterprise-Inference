@@ -1,0 +1,35 @@
+---
+# Unified Istio Gateway for all external traffic
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: ai-stack-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  # HTTP traffic
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "litellm.aistack.local"
+    - "*.kserve.aistack.local"
+    - "*.aistack.local"
+    # Redirect to HTTPS in production
+    # tls:
+    #   httpsRedirect: true
+  # HTTPS traffic
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    hosts:
+    - "litellm.aistack.local"
+    - "*.kserve.aistack.local"
+    - "*.aistack.local"
+    tls:
+      mode: SIMPLE
+      credentialName: aistack-tls-cert

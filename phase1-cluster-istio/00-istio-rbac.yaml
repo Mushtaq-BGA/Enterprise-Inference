@@ -1,0 +1,100 @@
+---
+# RBAC for istiod service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: istiod
+  labels:
+    app: istiod
+    istio: pilot
+rules:
+# Allow reading all resources needed for service discovery
+- apiGroups: [""]
+  resources: ["namespaces", "nodes", "pods", "services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["secrets", "configmaps"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+# Allow reading discovery resources
+- apiGroups: ["discovery.k8s.io"]
+  resources: ["endpointslices"]
+  verbs: ["get", "list", "watch"]
+# Allow managing leader election leases
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["leases"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+# Allow token validation for JWT authentication
+- apiGroups: ["authentication.k8s.io"]
+  resources: ["tokenreviews"]
+  verbs: ["create"]
+# Allow reading networking resources
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses", "ingressclasses"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses/status"]
+  verbs: ["*"]
+# Allow reading CRDs
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["get", "list", "watch"]
+# Allow managing Istio CRDs
+- apiGroups: ["networking.istio.io", "security.istio.io", "telemetry.istio.io"]
+  resources: ["*"]
+  verbs: ["*"]
+# Allow managing webhooks
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources: ["mutatingwebhookconfigurations", "validatingwebhookconfigurations"]
+  verbs: ["*"]
+# Allow certificate management
+- apiGroups: ["certificates.k8s.io"]
+  resources: ["certificatesigningrequests", "certificatesigningrequests/approval", "certificatesigningrequests/status"]
+  verbs: ["create", "get", "list", "watch", "update"]
+# Allow reading gateway API resources
+- apiGroups: ["gateway.networking.k8s.io"]
+  resources: ["gateways", "gatewayclasses", "httproutes", "tcproutes"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["gateway.networking.k8s.io"]
+  resources: ["gateways/status", "gatewayclasses/status", "httproutes/status", "tcproutes/status"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: istiod
+  labels:
+    app: istiod
+    istio: pilot
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: istiod
+subjects:
+- kind: ServiceAccount
+  name: istiod
+  namespace: istio-system
+---
+# RBAC for istio-ingressgateway
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: istio-ingressgateway
+  namespace: istio-system
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: istio-ingressgateway
+  namespace: istio-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: istio-ingressgateway
+subjects:
+- kind: ServiceAccount
+  name: istio-ingressgateway
+  namespace: istio-system

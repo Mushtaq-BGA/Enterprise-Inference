@@ -1,0 +1,72 @@
+# LiteLLM runtime configuration template. The deploy script renders this file
+# into a ConfigMap, replacing __CLUSTER_DOMAIN__ with the detected cluster DNS
+# suffix (for example: ai-stack-cluster).
+
+model_list:
+  # Models are auto-populated by Phase 4 discovery script
+  # Or manually define models here for production GitOps workflow
+  # Example:
+  # - model_name: qwen3-4b-int4-ov
+  #   litellm_params:
+  #     model: openvino/qwen3-4b-int4-ov
+  #     api_base: http://qwen3-4b-int4-ov-predictor.kserve.svc.__CLUSTER_DOMAIN__/v3
+  #     stream: true
+  #     max_retries: 3
+
+litellm_settings:
+  # Adjusted concurrency settings for rotated deployment
+  num_workers: 8
+  telemetry: false
+  drop_params: true
+  add_function_to_prompt: true
+
+  # Redis caching
+  cache: true
+  cache_params:
+    type: "redis"
+    host: "redis.redis.svc.__CLUSTER_DOMAIN__"
+    port: 6379
+    ttl: 600
+
+  # Database settings
+  database_url: "postgresql://litellm:L1teLLMdbP455w0rd2025@postgres.postgres.svc.__CLUSTER_DOMAIN__:5432/litellm"
+  database_connection_pool_limit: 40
+  database_connection_timeout: 45
+
+  # Router settings
+  routing_strategy: "simple-shuffle"
+  redis_host: "redis.redis.svc.__CLUSTER_DOMAIN__"
+  redis_port: 6379
+
+  # Timeouts and retries
+  request_timeout: 600
+  num_retries: 3
+  set_verbose: false
+
+  # Logging
+  json_logs: true
+  log_level: "INFO"
+  disable_error_logs: true
+
+  # Performance
+  stream_response: true
+  max_parallel_requests: 600
+  max_queue_size: 4000
+  queue_timeout: 30
+
+  # Health checks
+  health_check_interval: 60
+
+general_settings:
+  completion_model: null
+  master_key: "sk-52e2c3a5f98b4d5ca9d2e1327d6b41ef"
+  proxy_batch_write_at: 60
+  allow_requests_on_db_unavailable: true
+  # Allow MASTER_KEY for all operations without database authentication
+  disable_master_key_return: false
+  allow_user_auth: true
+
+environment_variables:
+  OPENAI_API_BASE: ""
+  MASTER_KEY: "sk-52e2c3a5f98b4d5ca9d2e1327d6b41ef"
+  LITELLM_MASTER_KEY: "sk-52e2c3a5f98b4d5ca9d2e1327d6b41ef"

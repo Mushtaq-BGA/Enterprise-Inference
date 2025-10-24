@@ -1,0 +1,250 @@
+---
+# Example 1: HuggingFace Hub - Qwen3-8B-INT4 (Recommended)
+# Directly downloads from HuggingFace Hub, no storage setup required
+# CPU optimized for throughput
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: qwen3-8b-int4-ov
+  namespace: kserve
+  annotations:
+    autoscaling.knative.dev/min-scale: "0"
+    autoscaling.knative.dev/max-scale: "5"
+    autoscaling.knative.dev/target: "10"
+    sidecar.istio.io/inject: "true"
+spec:
+  predictor:
+    minReplicas: 0
+    maxReplicas: 5
+    model:
+      runtime: kserve-openvino
+      modelFormat:
+        name: huggingface
+      args:
+        - --source_model=OpenVINO/Qwen3-8B-int4-ov
+        - --model_repository_path=/tmp
+        - --task=text_generation
+        - --target_device=CPU
+        - --plugin_config={"PERFORMANCE_HINT":"THROUGHPUT","NUM_STREAMS":"AUTO"}
+        - --nireq=4
+      resources:
+        requests:
+          cpu: "2"
+          memory: "4Gi"
+        limits:
+          cpu: "4"
+          memory: "8Gi"
+
+---
+# Example 2: HuggingFace Hub - Phi-3.5-mini-instruct INT4
+# Lightweight model optimized for latency
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: phi35-mini-int4-ov
+  namespace: kserve
+  annotations:
+    autoscaling.knative.dev/min-scale: "0"
+    autoscaling.knative.dev/max-scale: "3"
+    sidecar.istio.io/inject: "true"
+spec:
+  predictor:
+    model:
+      runtime: kserve-openvino
+      modelFormat:
+        name: huggingface
+      args:
+        - --source_model=OpenVINO/Phi-3.5-mini-instruct-int4-ov
+        - --model_repository_path=/tmp
+        - --task=text_generation
+        - --target_device=CPU
+        - --plugin_config={"PERFORMANCE_HINT":"LATENCY"}
+        - --nireq=2
+      resources:
+        requests:
+          cpu: "1"
+          memory: "2Gi"
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+
+---
+# Example 3: HuggingFace Hub - LLaMA 3.2-3B INT4
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: llama32-3b-int4-ov
+  namespace: kserve
+  annotations:
+    autoscaling.knative.dev/min-scale: "0"
+    autoscaling.knative.dev/max-scale: "5"
+    sidecar.istio.io/inject: "true"
+spec:
+  predictor:
+    model:
+      runtime: kserve-openvino
+      modelFormat:
+        name: huggingface
+      args:
+        - --source_model=OpenVINO/Llama-3.2-3B-Instruct-int4-ov
+        - --model_repository_path=/tmp
+        - --task=text_generation
+        - --target_device=CPU
+      resources:
+        requests:
+          cpu: "2"
+          memory: "3Gi"
+        limits:
+          cpu: "4"
+          memory: "6Gi"
+
+---
+# Example 4: PVC Storage - Pre-downloaded OpenVINO Model
+# Requires PVC with model files already present
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: custom-model-pvc
+  namespace: kserve
+  annotations:
+    autoscaling.knative.dev/min-scale: "0"
+    autoscaling.knative.dev/max-scale: "3"
+    sidecar.istio.io/inject: "true"
+spec:
+  predictor:
+    model:
+      runtime: kserve-openvino
+      modelFormat:
+        name: openvino
+      storageUri: "pvc://model-storage-pvc/my-custom-model"
+      resources:
+        requests:
+          cpu: "1"
+          memory: "2Gi"
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+
+---
+# Example 5: S3 Storage - OpenVINO Model from S3
+# Requires S3 credentials configured
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: custom-model-s3
+  namespace: kserve
+  annotations:
+    autoscaling.knative.dev/min-scale: "0"
+    autoscaling.knative.dev/max-scale: "5"
+    sidecar.istio.io/inject: "true"
+spec:
+  predictor:
+    model:
+      runtime: kserve-openvino
+      modelFormat:
+        name: openvino
+      storageUri: "s3://my-bucket/models/my-model"
+      resources:
+        requests:
+          cpu: "2"
+          memory: "4Gi"
+        limits:
+          cpu: "4"
+          memory: "8Gi"
+
+---
+# Example 6: ONNX Model from HuggingFace
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: onnx-model-hf
+  namespace: kserve
+  annotations:
+    autoscaling.knative.dev/min-scale: "0"
+    autoscaling.knative.dev/max-scale: "3"
+    sidecar.istio.io/inject: "true"
+spec:
+  predictor:
+    model:
+      runtime: kserve-openvino
+      modelFormat:
+        name: onnx
+      storageUri: "hf://organization/model-name"
+      resources:
+        requests:
+          cpu: "1"
+          memory: "2Gi"
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+
+---
+# Example 7: High-Traffic Model (No Scale-to-Zero)
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: high-traffic-model
+  namespace: kserve
+  annotations:
+    autoscaling.knative.dev/min-scale: "2"      # Always keep 2 pods running
+    autoscaling.knative.dev/max-scale: "20"     # Scale up to 20 pods
+    autoscaling.knative.dev/target: "50"        # 50 concurrent requests per pod
+    sidecar.istio.io/inject: "true"
+spec:
+  predictor:
+    minReplicas: 2
+    maxReplicas: 20
+    model:
+      runtime: kserve-openvino
+      modelFormat:
+        name: huggingface
+      args:
+        - --source_model=OpenVINO/Qwen3-8B-int4-ov
+        - --model_repository_path=/tmp
+        - --task=text_generation
+        - --target_device=CPU
+        - --plugin_config={"PERFORMANCE_HINT":"THROUGHPUT","NUM_STREAMS":"4"}
+        - --nireq=8
+      resources:
+        requests:
+          cpu: "4"
+          memory: "8Gi"
+        limits:
+          cpu: "8"
+          memory: "16Gi"
+
+---
+# Example 8: Low-Latency Model (Always Warm)
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: low-latency-model
+  namespace: kserve
+  annotations:
+    autoscaling.knative.dev/min-scale: "1"      # Keep 1 pod always warm
+    autoscaling.knative.dev/max-scale: "5"      # Limited scaling
+    autoscaling.knative.dev/target: "10"        # Low concurrency target
+    autoscaling.knative.dev/scale-down-delay: "10m"  # Slow scale-down
+    sidecar.istio.io/inject: "true"
+spec:
+  predictor:
+    minReplicas: 1
+    maxReplicas: 5
+    model:
+      runtime: kserve-openvino
+      modelFormat:
+        name: huggingface
+      args:
+        - --source_model=OpenVINO/Phi-3.5-mini-instruct-int4-ov
+        - --model_repository_path=/tmp
+        - --task=text_generation
+        - --target_device=CPU
+        - --plugin_config={"PERFORMANCE_HINT":"LATENCY"}
+        - --nireq=2
+      resources:
+        requests:
+          cpu: "2"
+          memory: "4Gi"
+        limits:
+          cpu: "4"
+          memory: "8Gi"

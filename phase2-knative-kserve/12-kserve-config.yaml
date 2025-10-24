@@ -1,0 +1,108 @@
+---
+# KServe InferenceService ConfigMap
+# Note: Using ClusterServingRuntime (kserve-openvino) instead of predictor config
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: inferenceservice-config
+  namespace: kserve
+data:
+  predictors: |-
+    {}
+  explainers: |-
+    {
+      "alibi": {
+        "image": "kserve/alibi-explainer",
+        "defaultImageVersion": "latest"
+      }
+    }
+  storageInitializer: |-
+    {
+      "image": "kserve/storage-initializer:v0.15.0",
+      "memoryRequest": "100Mi",
+      "memoryLimit": "1Gi",
+      "cpuRequest": "100m",
+      "cpuLimit": "1"
+    }
+  credentials: |-
+    {
+      "gcs": {
+        "gcsCredentialFileName": "gcloud-application-credentials.json"
+      },
+      "s3": {
+        "s3AccessKeyIDName": "AWS_ACCESS_KEY_ID",
+        "s3SecretAccessKeyName": "AWS_SECRET_ACCESS_KEY",
+        "s3Endpoint": "",
+        "s3UseHttps": "",
+        "s3Region": "",
+        "s3VerifySSL": "",
+        "s3UseVirtualBucket": "",
+        "s3UseAnonymousCredential": "",
+        "s3CABundle": ""
+      }
+    }
+  ingress: |-
+    {
+      "ingressGateway": "knative-serving/knative-ingress-gateway",
+      "ingressService": "istio-ingressgateway.istio-system.svc.cluster.local",
+      "localGateway": "knative-serving/knative-local-gateway",
+      "localGatewayService": "knative-local-gateway.istio-system.svc.cluster.local",
+      "ingressDomain": "aistack.local",
+      "ingressClassName": "istio",
+      "domainTemplate": "{{.Name}}-{{.Namespace}}.{{.IngressDomain}}",
+      "urlScheme": "http",
+      "disableIstioVirtualHost": false
+    }
+  deploy: |-
+    {
+      "defaultDeploymentMode": "Serverless"
+    }
+---
+# KServe Controller ConfigMap for logger
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logger-config
+  namespace: kserve
+data:
+  logger: |-
+    {
+      "image": "kserve/agent:latest",
+      "memoryRequest": "100Mi",
+      "memoryLimit": "1Gi",
+      "cpuRequest": "100m",
+      "cpuLimit": "1",
+      "defaultUrl": "http://default-broker"
+    }
+---
+# KServe Controller ConfigMap for batcher
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: batcher-config
+  namespace: kserve
+data:
+  batcher: |-
+    {
+      "image": "kserve/agent:latest",
+      "memoryRequest": "1Gi",
+      "memoryLimit": "1Gi",
+      "cpuRequest": "1",
+      "cpuLimit": "1"
+    }
+---
+# KServe Controller ConfigMap for agent
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-config
+  namespace: kserve
+data:
+  agent: |-
+    {
+      "image": "kserve/agent:latest",
+      "memoryRequest": "100Mi",
+      "memoryLimit": "1Gi",
+      "cpuRequest": "100m",
+      "cpuLimit": "1"
+    }

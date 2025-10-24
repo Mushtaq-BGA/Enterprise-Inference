@@ -1,0 +1,49 @@
+# Example Certificate Configuration
+# This is a TEMPLATE - do NOT apply directly
+# Copy and modify with your actual domain name
+
+# ---
+# apiVersion: cert-manager.io/v1
+# kind: Certificate
+# metadata:
+#   name: inference-gateway-tls
+#   namespace: istio-system
+# spec:
+#   secretName: inference-gateway-tls
+#   issuerRef:
+#     name: letsencrypt-prod  # or letsencrypt-staging for testing
+#     kind: ClusterIssuer
+#   dnsNames:
+#   - api.yourdomain.com      # CHANGE THIS to your actual domain
+#   - models.yourdomain.com   # CHANGE THIS to your actual domain
+
+# ---
+# # Example Istio Gateway with TLS
+# apiVersion: networking.istio.io/v1beta1
+# kind: Gateway
+# metadata:
+#   name: inference-gateway-https
+#   namespace: istio-system
+# spec:
+#   selector:
+#     istio: ingressgateway
+#   servers:
+#   - port:
+#       number: 443
+#       name: https
+#       protocol: HTTPS
+#     tls:
+#       mode: SIMPLE
+#       credentialName: inference-gateway-tls  # Must match Certificate secretName
+#     hosts:
+#     - "api.yourdomain.com"
+#     - "models.yourdomain.com"
+#   - port:
+#       number: 80
+#       name: http
+#       protocol: HTTP
+#     hosts:
+#     - "*"
+#     # Optional: redirect HTTP to HTTPS
+#     tls:
+#       httpsRedirect: true

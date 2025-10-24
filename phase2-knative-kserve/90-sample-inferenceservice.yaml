@@ -1,0 +1,56 @@
+---
+# Sample InferenceService - Qwen3-4B-INT4 from HuggingFace Hub
+# Uses ClusterServingRuntime: kserve-openvino
+# Model: OpenVINO/Qwen3-4B-int4-ov (optimized for CPU inference)
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: qwen3-4b-int4-ov
+  namespace: kserve
+  annotations:
+    # Knative autoscaling annotations - optimized for production workloads
+    # Min scale: 1 keeps model warm (avoids cold start)
+    autoscaling.knative.dev/min-scale: "1"
+    autoscaling.knative.dev/max-scale: "3"
+    
+    # Dual-metric autoscaling: concurrency + CPU
+    autoscaling.knative.dev/target: "10"           # Scale up when >10 concurrent requests per pod
+    autoscaling.knative.dev/metric: "cpu"          # Also monitor CPU utilization
+    autoscaling.knative.dev/target-utilization-percentage: "70"  # Scale at 70% CPU
+    autoscaling.knative.dev/class: "kpa.autoscaling.knative.dev"
+    
+    # Scaling behavior tuning
+    autoscaling.knative.dev/scale-down-delay: "30s"  # Wait 30s before scaling down (avoid thrashing)
+    autoscaling.knative.dev/window: "60s"             # 60s observation window for stable decisions
+    autoscaling.knative.dev/panic-window-percentage: "10"  # Quick response (6s) to traffic spikes
+    autoscaling.knative.dev/panic-threshold-percentage: "200"  # Aggressive scale-up at 2x target
+    
+    # Istio sidecar annotations
+    sidecar.istio.io/inject: "true"
+    
+    # Serving runtime
+    serving.kserve.io/deploymentMode: "Serverless"
+spec:
+  predictor:
+    minReplicas: 1
+    maxReplicas: 3
+    scaleTarget: 10
+    scaleMetric: concurrency
+    # Use OpenVINO with direct HuggingFace pull (no storage-initializer)
+    model:
+      runtime: kserve-openvino-hf
+      modelFormat:
+        name: huggingface
+      args:
+        - --source_model=OpenVINO/Qwen3-4B-int4-ov
+        - --model_repository_path=/tmp
+        - --task=text_generation
+        - --target_device=CPU
+      resources:
+        requests:
+          cpu: "8"      # Guaranteed 8 cores
+          memory: "16Gi" # Guaranteed 16GB
+        limits:
+          cpu: "32"     # Can burst up to 32 cores
+          memory: "64Gi" # Can use up to 64GB
+

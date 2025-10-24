@@ -1,0 +1,48 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Editor settings
+.vscode/
+.idea/
+
+# Logs and local files
+*.log
+deployment-*.log
+*.tmp
+*.swp
+
+# Kubernetes credentials and cache
+.kube/
+
+# Kubespray directory (too large for git)
+kubespray/
+
+# Istio binaries and large manifests
+.istio-*/
+*/.istio-*/
+
+# Node modules
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.tar.gz
+*.zip
+
+# Local configuration
+.env
+.env.local
+
+# Test results
+test-results/
+benchmark_results/
+
+# Runtime files
+*.pid
+*.sock

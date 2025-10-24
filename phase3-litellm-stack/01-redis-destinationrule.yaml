@@ -1,0 +1,18 @@
+---
+# DestinationRule for Redis - enables mTLS for cache connections
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: redis-dr
+  namespace: redis
+spec:
+  host: redis.redis.svc.ai-stack-cluster
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    connectionPool:
+      tcp:
+        maxConnections: 500
+      http:
+        http1MaxPendingRequests: 500
+        maxRequestsPerConnection: 10

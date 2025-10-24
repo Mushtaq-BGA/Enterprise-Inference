@@ -1,0 +1,31 @@
+{
+  "config": {
+    "host": "litellm.aistack.local",
+    "port": 32080,
+    "model": "qwen3-4b-int4-ov",
+    "num_prompts": 5,
+    "input_length": 50,
+    "output_length": 30,
+    "max_concurrent": 2,
+    "request_rate": null
+  },
+  "results": {
+    "total_requests": 5,
+    "successful_requests": 5,
+    "failed_requests": 0,
+    "total_input_tokens": 250,
+    "total_output_tokens": 5,
+    "total_time": 0.046999216079711914,
+    "ttft_mean": 0.013382434844970703,
+    "ttft_p50": 0.013390779495239258,
+    "ttft_p90": 0.016002416610717773,
+    "ttft_p99": 0.016623401641845705,
+    "latency_mean": 0.015554475784301757,
+    "latency_p50": 0.013420581817626953,
+    "latency_p90": 0.020183658599853514,
+    "latency_p99": 0.0209011173248291,
+    "throughput_requests_per_sec": 106.38475313119835,
+    "throughput_tokens_per_sec": 5425.6224096911155,
+    "throughput_output_tokens_per_sec": 106.38475313119835
+  }
+}

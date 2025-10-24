@@ -1,0 +1,39 @@
+# Multi-Node Kubernetes Cluster Inventory
+# Copy this file to inventory.ini and customize with your node IPs
+
+# Control plane nodes (masters) - minimum 1, recommended 3 for HA
+[kube_control_plane]
+master1 ansible_host=192.168.1.10 ip=192.168.1.10
+master2 ansible_host=192.168.1.11 ip=192.168.1.11
+master3 ansible_host=192.168.1.12 ip=192.168.1.12
+
+# Worker nodes - add as many as needed
+[kube_node]
+worker1 ansible_host=192.168.1.20 ip=192.168.1.20
+worker2 ansible_host=192.168.1.21 ip=192.168.1.21
+worker3 ansible_host=192.168.1.22 ip=192.168.1.22
+
+# etcd nodes (usually same as control plane)
+[etcd]
+master1 ansible_host=192.168.1.10 ip=192.168.1.10
+master2 ansible_host=192.168.1.11 ip=192.168.1.11
+master3 ansible_host=192.168.1.12 ip=192.168.1.12
+
+# SSH settings
+[all:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+# Uncomment if you need to use a password instead of SSH key:
+# ansible_ssh_pass=your_password
+# ansible_become_pass=your_sudo_password
+
+# Example for single control plane + multiple workers:
+# [kube_control_plane]
+# master1 ansible_host=192.168.1.10 ip=192.168.1.10
+#
+# [kube_node]
+# worker1 ansible_host=192.168.1.20 ip=192.168.1.20
+# worker2 ansible_host=192.168.1.21 ip=192.168.1.21
+#
+# [etcd]
+# master1 ansible_host=192.168.1.10 ip=192.168.1.10

@@ -1,0 +1,10 @@
+# Self-signed Certificate Issuer
+# Useful for internal development/testing when you don't have a public domain
+# Browsers will show warnings but encryption still works
+
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}

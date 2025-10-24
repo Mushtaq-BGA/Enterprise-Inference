@@ -1,0 +1,110 @@
+# Phase 4 – LiteLLM Model Registration
+
+Phase 4 automatically discovers KServe InferenceServices and registers them with LiteLLM for unified API access.
+
+## Prerequisites
+
+- Phase 2 deployed (Knative + KServe)
+- Phase 3 deployed (LiteLLM + PostgreSQL + Redis)
+- Python 3.8+ available locally
+- `kubectl` configured for your cluster
+
+## Quick Start
+
+```bash
+cd phase4-model-watcher
+./deploy-phase4.sh register
+```
+
+The script will:
+- Auto-discover all InferenceServices in the `kserve` namespace
+- Register each model with LiteLLM using the internal cluster URL
+- Configure appropriate model types (OpenVINO, OpenAI, etc.)
+
+## Commands
+
+### Register Models
+
+Auto-discover and register all KServe models:
+```bash
+./deploy-phase4.sh register
+```
+
+Register a specific model manually:
+```bash
+./deploy-phase4.sh register \
+  --model my-model \
+  --api-base http://my-model.kserve.svc.cluster.local/v1 \
+  --model-type openai
+```
+
+### List Registered Models
+
+```bash
+./deploy-phase4.sh list
+```
+
+### Deregister a Model
+
+```bash
+./deploy-phase4.sh deregister --model qwen3-4b-int4-ov
+```
+
+## Configuration
+
+The script uses internal cluster URLs by default:
+- **LiteLLM URL**: `http://litellm.litellm.svc.<cluster-domain>:4000`
+- **API Key**: `sk-52e2c3a5f98b4d5ca9d2e1327d6b41ef` (default)
+
+Override with environment variables:
+```bash
+export LITELLM_URL="http://custom-url:4000"
+export LITELLM_API_KEY="your-custom-key"
+./deploy-phase4.sh register
+```
+
+## How It Works
+
+1. **Discovery**: Queries Kubernetes for InferenceService resources
+2. **Detection**: Automatically detects framework (OpenVINO, Triton, PyTorch, etc.)
+3. **Registration**: Calls LiteLLM's `/model/new` API endpoint
+4. **Verification**: Lists registered models to confirm
+
+## Framework Detection
+
+The script automatically detects the model framework:
+- OpenVINO models → uses `/v3` endpoint
+- Other frameworks → uses `/v1` endpoint
+- Model type set appropriately for LiteLLM routing
+
+## Troubleshooting
+
+**No models discovered**:
+```bash
+kubectl get inferenceservices -n kserve
+```
+
+**LiteLLM connection failed**:
+```bash
+kubectl get pods -n litellm
+kubectl logs -n litellm deployment/litellm
+```
+
+**Model registration failed**:
+- Check if the model's InferenceService is READY
+- Verify the model's endpoint is accessible
+- Check LiteLLM logs for specific errors
+
+## Next Steps
+
+After registering models, test them through LiteLLM:
+```bash
+# From within the cluster
+curl http://litellm.litellm.svc.cluster.local:4000/v1/models \
+  -H "Authorization: Bearer sk-52e2c3a5f98b4d5ca9d2e1327d6b41ef"
+```
+
+Deploy Phase 5 for optimization and load testing:
+```bash
+cd ../phase5-optimization && ./deploy-phase5.sh
+```
