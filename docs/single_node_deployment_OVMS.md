@@ -64,11 +64,18 @@ Export the Hugging Face token as an environment variable by replacing "Your_Hugg
 ```bash
 export HUGGINGFACE_TOKEN=<<Your_Hugging_Face_Token_ID>>
 
-Now run the automation using the configured files.
+**Now run the automation using the configured files.**
 
 cd core
 chmod +x inference-stack-deploy.sh
+
+./inference-stack-deploy.sh --cpu-or-gpu "cpu" --hugging-face-token $HUGGINGFACE_TOKEN
 ```
+
+Select Option 1 and confirm the Yes/No prompt.
+
+This will deploy the setup automatically. If any issues are encountered, double-check the prerequisites and configuration files
+
 **Once the cluster is up and we can go to step 6**
 
 ### Step 6: Edit the `values.yaml` File
