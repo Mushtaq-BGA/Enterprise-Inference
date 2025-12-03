@@ -5,10 +5,7 @@ This guide provides step-by-step instructions to deploy Intel® AI for Enterpris
 ## Prerequisites
 Before running the automation, complete all [prerequisites](./prerequisites.md).
 
-## Deployment
-
-### Step 1: Configure the Automation config file
-Clone the Enterprise Inference repo, then copy the single node preset inference config file to the working directory:
+## Deployment Steps
 
 ### Step 1: Modify the hosts file
 Since we are testing locally, we need to map a fake domain (`api.example.com`) to `localhost` in the `/etc/hosts` file.
@@ -54,7 +51,7 @@ Modify `inference-config.cfg` and set deploy_llm_models variable to off as shown
 *deploy_llm_models=off*
  Ensure the `cluster_url` field is set to the DNS used, and the paths to the certificate and key files are valid. The keycloak fields and deployment options can be left unchanged. For systems behind a proxy, refer to the [proxy guide](./running-behind-proxy.md).
 
-### Step 2: Update `hosts.yaml` File
+### Step 4: Update `hosts.yaml` File
 Copy the single node preset hosts config file to the working directory:
 
 ```bash
@@ -67,13 +64,13 @@ Export the Hugging Face token as an environment variable by replacing "Your_Hugg
 ```bash
 export HUGGINGFACE_TOKEN=<<Your_Hugging_Face_Token_ID>>
 ```
-### Step 3: Navigate to the Helm Chart Directory
+### Step 5: Navigate to the Helm Chart Directory
 
 ```bash
 cd Enterprise-Inference/core/helm-charts/ovms/
 ```
 
-### Step 4: Edit the `values.yaml` File
+### Step 6: Edit the `values.yaml` File
 
 Open the `values.yaml` file and configure the following parameters:
 
@@ -118,7 +115,7 @@ ingress:
 ```
 ---
 
-## Deployment
+## Deploying OpenVINO LLM models
 
 Below are the pre-tested models and the respective Helm commands to deploy
 
