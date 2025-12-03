@@ -14,6 +14,13 @@ Before deploying Intel AI for Enterprise Inference, it's important to understand
 - AI Model Hosting Requirements to help you choose the optimal configuration
 - Performance metrics for different model sizes and use cases
 
+## Deployment Architecture
+
+Intel AI for Enterprise Inference supports both single-node and multi-node deployment architectures:
+
+- **Single-node deployment**: All components run on a single Intel® Gaudi® 3 AI accelerator server - ideal for development, testing, and smaller workloads
+- **Multi-node deployment**: Distributed architecture with separate control plane and worker nodes - ideal for production, high availability, and scaling
+
 ## Deployment Patterns
 
 Intel AI for Enterprise Inference provides two deployment patterns to accommodate different infrastructure requirements and organizational preferences.
@@ -61,13 +68,18 @@ Infrastructure Assessment:
 
 The following large language models are supported for deployment:
 
-| Model Name | Cards Required       | Storage | Model   ID |
-|------------|----------------------|---------|----------  |
-| meta-llama/Llama-3.1-8B-Instruct  | 1 	  | 20GB  | 1  |
-| meta-llama/Llama-3.3-70B-Instruct | 4       | 150GB | 12 |
-| meta-llama/Llama-3.1-405B-Instruct| 8       | 900GB | 11 |
+| Model Name 								| Cards Required       		| Storage | Model ID |
+|-------------------------------------------|---------------------------|---------|----------|
+| meta-llama/Llama-3.1-8B-Instruct  		| 1 	  					| 20GB    | 1  		 |
+| meta-llama/Llama-3.1-405B-Instruct 		| 8       					| 900GB   | 3		 |
+| meta-llama/Llama-3.3-70B-Instruct			| 4       					| 150GB   | 4 		 |
+| meta-llama/Llama-4-Scout-17B-16E-Instruct | 4       					| 200GB   | 5 		 |
+| Qwen/Qwen2.5-32B-Instruct					| 1       					| 70GB    | 6 		 |
 
 > **Note:** Additional models can be deployed or existing models can be removed after initial deployment by accessing the deployment instance.
+>
+> ### Quota Increase for Gaudi 3 - IBM Cloud Quick Start Guide [Quota Increase for Gaudi 3](./quota-increase.md)
+>
 
 ### Required Components
 
