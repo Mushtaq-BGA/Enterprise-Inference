@@ -1,6 +1,6 @@
-# Single Node Deployment Guide
+# OpenVINO Model Server (OVMS) on Intel Enterprise Inference - Single Node Deployment Guide
 
-This guide provides step-by-step instructions to deploy Intel® AI for Enterprise Inference on a single node.
+This guide provides step-by-step instructions to deploy Intel® AI for Enterprise Inference and deploying LLM models using OpenVINO Model Server (OVMS) on existing Enterprise-Inference cluster on a single node.
 
 ## Prerequisites
 Before running the automation, complete all [prerequisites](./prerequisites.md).
