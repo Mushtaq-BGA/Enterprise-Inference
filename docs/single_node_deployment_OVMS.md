@@ -50,7 +50,7 @@ cp -f docs/examples/single-node/inference-config.cfg core/inventory/inference-co
 ### Step4: Modify `inference-config.cfg` and set deploy_llm_models variable to off like this 
 
 ```
-nano ~Enterprise-Inference/core/inventory/inference-config.cfg
+nano ~/Enterprise-Inference/core/inventory/inference-config.cfg
 
 change  " deploy_llm_models=on " ->  " deploy_llm_models=off "
 
