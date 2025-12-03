@@ -47,7 +47,7 @@ cd Enterprise-Inference
 cp -f docs/examples/single-node/inference-config.cfg core/inventory/inference-config.cfg
 ```
 
-### Step4: Modify `inference-config.cfg` and set deploy_llm_models variable to off like this 
+### Step 4: Modify `inference-config.cfg` and set deploy_llm_models variable to off like this 
 
 ```
 nano ~/Enterprise-Inference/core/inventory/inference-config.cfg
@@ -58,7 +58,7 @@ change  " deploy_llm_models=on " ->  " deploy_llm_models=off "
 
 Ensure the `cluster_url` field is set to the DNS used, and the paths to the certificate and key files are valid. The keycloak fields and deployment options can be left unchanged. For systems behind a proxy, refer to the [proxy guide](./running-behind-proxy.md).
 
-### Step 4: Update `hosts.yaml` File
+### Step 5: Update `hosts.yaml` File
 Copy the single node preset hosts config file to the working directory:
 
 ```bash
@@ -82,7 +82,10 @@ chmod +x inference-stack-deploy.sh
 
 This will deploy the setup automatically. If any issues are encountered, double-check the prerequisites and configuration files
 
-**Once the cluster is up and we can go to step 6**
+Once the cluster setup is done, you can see completion message
+![alt text](image.png) 
+
+you can now move to next step
 
 ### Step 6: Edit the `values.yaml` File
 
