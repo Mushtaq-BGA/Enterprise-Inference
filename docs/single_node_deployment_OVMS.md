@@ -51,7 +51,8 @@ cp -f docs/examples/single-node/inference-config.cfg core/inventory/inference-co
 
 ```
 nano ~Enterprise-Inference/core/inventory/inference-config.cfg
-**deploy_llm_models=off**
+
+change **deploy_llm_models=on** -> **deploy_llm_models=off**
 
 ```
 
