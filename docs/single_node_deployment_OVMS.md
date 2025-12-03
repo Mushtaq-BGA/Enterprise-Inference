@@ -89,12 +89,10 @@ you can now move to next step
 
 ### Step 6: Edit the `values.yaml` File
 
-Open the `values.yaml` file and configure the following parameters:
-
 #### OIDC Configuration
 
 **NOTE: you need to get keycloak clientId and clientSecret as shown below before configuring OIDC**
-
+```
 cd ~/Enterprise-Inference/core/scripts
 source generate-token.sh
 
@@ -104,6 +102,9 @@ cd ~/Enterprise-Inference/core/helm-charts/ovms/
 
 echo $KEYCLOAK_CLIENT_ID         # this will print your keycloak client ID that can be used in above OIDC configuration
 echo $KEYCLOAK_CLIENT_SECRET     # this will print your keycloak client secret that can be used in above OIDC configuration
+```
+Open the `values.yaml` file and configure the following parameters:
+nano ~/Enterprise-Inference/core/helm-charts/ovms/values.yaml
 
 ```yaml
 oidc:
@@ -113,7 +114,7 @@ oidc:
   clientSecret: $KEYCLOAK_CLIENT_SECRET            # Update this using below steps mentioned in NOTE section
   discovery: "http://keycloak.default.svc.cluster.local/realms/master/.well-known/openid-configuration"
   introspectionEndpoint: "http://keycloak.default.svc.cluster.local/realms/master/protocol/openid-connect/token/introspect"
-
+```
 
 #### Host Configuration
 
