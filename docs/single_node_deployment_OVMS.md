@@ -96,14 +96,14 @@ you can now move to next step
 cd ~/Enterprise-Inference/core/scripts
 source generate-token.sh
 
-Configure OpenID Connect authentication with your Keycloak instance:
-
 cd ~/Enterprise-Inference/core/helm-charts/ovms/
 
 echo $KEYCLOAK_CLIENT_ID         # this will print your keycloak client ID that can be used in above OIDC configuration
 echo $KEYCLOAK_CLIENT_SECRET     # this will print your keycloak client secret that can be used in above OIDC configuration
 ```
-Open the `values.yaml` file and configure the following parameters:
+
+Configure OpenID Connect authentication with your Keycloak instance, open the `values.yaml` file and configure the following parameters:
+
 nano ~/Enterprise-Inference/core/helm-charts/ovms/values.yaml
 
 ```yaml
