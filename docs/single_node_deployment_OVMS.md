@@ -47,9 +47,9 @@ cd Enterprise-Inference
 cp -f docs/examples/single-node/inference-config.cfg core/inventory/inference-config.cfg
 ```
 
-Modify `inference-config.cfg` and set deploy_llm_models variable to off as shown below 
-*deploy_llm_models=off*
- Ensure the `cluster_url` field is set to the DNS used, and the paths to the certificate and key files are valid. The keycloak fields and deployment options can be left unchanged. For systems behind a proxy, refer to the [proxy guide](./running-behind-proxy.md).
+**Modify `inference-config.cfg` and set deploy_llm_models variable to off like this -> deploy_llm_models=off**
+
+Ensure the `cluster_url` field is set to the DNS used, and the paths to the certificate and key files are valid. The keycloak fields and deployment options can be left unchanged. For systems behind a proxy, refer to the [proxy guide](./running-behind-proxy.md).
 
 ### Step 4: Update `hosts.yaml` File
 Copy the single node preset hosts config file to the working directory:
@@ -63,12 +63,13 @@ cp -f docs/examples/single-node/hosts.yaml core/inventory/hosts.yaml
 Export the Hugging Face token as an environment variable by replacing "Your_Hugging_Face_Token_ID" with actual Hugging Face Token. Alternatively, set `hugging-face-token` to the token value inside `inference-config.cfg`.
 ```bash
 export HUGGINGFACE_TOKEN=<<Your_Hugging_Face_Token_ID>>
-```
-### Step 5: Navigate to the Helm Chart Directory
 
+Now run the automation using the configured files.
 ```bash
-cd Enterprise-Inference/core/helm-charts/ovms/
+cd core
+chmod +x inference-stack-deploy.sh
 ```
+**Once the cluster is up and we can go to step 6**
 
 ### Step 6: Edit the `values.yaml` File
 
@@ -76,24 +77,27 @@ Open the `values.yaml` file and configure the following parameters:
 
 #### OIDC Configuration
 
+**NOTE: you need to get keycloak clientId and clientSecret as shown below before configuring OIDC**
+
+cd ~/Enterprise-Inference/core/scripts
+source generate-token.sh
+
 Configure OpenID Connect authentication with your Keycloak instance:
+
+cd ~/Enterprise-Inference/core/helm-charts/ovms/
+
+echo $KEYCLOAK_CLIENT_ID         # this will print your keycloak client ID that can be used in above OIDC configuration
+echo $KEYCLOAK_CLIENT_SECRET     # this will print your keycloak client secret that can be used in above OIDC configuration
 
 ```yaml
 oidc:
   enabled: true
   realm: master
-  clientId: "your-client-id"                    # Update this using below steps mentioned in NOTE section
-  clientSecret: "your-client-secret"            # Update this using below steps mentioned in NOTE section
+  clientId: $KEYCLOAK_CLIENT_ID                   # Update this using below steps mentioned in NOTE section
+  clientSecret: $KEYCLOAK_CLIENT_SECRET            # Update this using below steps mentioned in NOTE section
   discovery: "http://keycloak.default.svc.cluster.local/realms/master/.well-known/openid-configuration"
   introspectionEndpoint: "http://keycloak.default.svc.cluster.local/realms/master/protocol/openid-connect/token/introspect"
 
-NOTE: you can get clientId and clientSecret as shown below
-
-export KEYCLOAK_CLIENT_ID=my-client-id # The client ID to be created in Keycloak as menitoned in your inference-config.cfg file in step 3
-export KEYCLOAK_CLIENT_SECRET=$(bash "${SCRIPT_DIR}/keycloak-fetch-client-secret.sh" ${KEYCLOAK_URL} ${KEYCLOAK_ADMIN_USERNAME} ${KEYCLOAK_PASSWORD} ${KEYCLOAK_CLIENT_ID} | awk -F': ' '/Client secret:/ {print $2}')
-
-echo $KEYCLOAK_CLIENT_ID         # this will print your keycloak client ID that can be used in above OIDC configuration
-echo $KEYCLOAK_CLIENT_SECRET     # this will print your keycloak client secret that can be used in above OIDC configuration
 
 #### Host Configuration
 
