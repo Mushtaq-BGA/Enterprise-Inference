@@ -162,6 +162,7 @@ First, obtain an access token:
 ```bash
 export CLIENTID=$KEYCLOAK_CLIENT_ID 
 export CLIENT_SECRET=$KEYCLOAK_CLIENT_SECRET
+export BASE_URL=https://api.example.com
 export TOKEN_URL=https://${BASE_URL}/token
 export TOKEN=$(curl -k -X POST ${TOKEN_URL} -H 'Content-Type: application/x-www-form-urlencoded' -d "grant_type=client_credentials&client_id=${CLIENTID}&client_secret=${CLIENT_SECRET}" | jq -r .access_token)
 
@@ -173,7 +174,7 @@ echo "Access Token: $TOKEN"
 ```bash
 # Test chat completions endpoint
 For Inferencing with Qwen3-4B-int4-ov:
-curl -k ${BASE_URL}/qwen3-4b-ovms/v1/completions -X POST -d '{"messages": [{"role": "system","content": "You are helpful assistant"},{"role": "user","content": "what is photosynthesis"}],"model": "qwen3-4b","max_tokens": 32,"temperature": 0.4}' -H 'Content-Type: application/json' -sS -H "Authorization: Bearer $TOKEN"
+curl -k ${BASE_URL}/qwen3-4b-ovms/v3/chat/completions -X POST -d '{"messages": [{"role": "system","content": "You are helpful assistant"},{"role": "user","content": "what is photosynthesis"}],"model": "qwen3-4b","max_tokens": 32,"temperature": 0.4}' -H 'Content-Type: application/json' -sS -H "Authorization: Bearer $TOKEN"
 
 For Inferencing with Phi-3.5-mini-instruct-int4-cw-ov:
 curl -k ${BASE_URL}/phi-3-5-mini-ovms/v3/chat/completions -X POST -d '{"messages": [{"role": "system","content": "You are helpful assistant"},{"role": "user","content": "what is api"}],"model": "phi-3-5-mini","max_tokens": 32,"temperature": 0.4}' -H 'Content-Type: application/json' -sS -H "Authorization: Bearer $TOKEN"
