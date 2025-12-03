@@ -60,11 +60,10 @@ cp -f docs/examples/single-node/hosts.yaml core/inventory/hosts.yaml
 
 > **Note** The `ansible_user` field is set to *ubuntu* by default. Change it to the actual username used. 
 
-Export the Hugging Face token as an environment variable by replacing "Your_Hugging_Face_Token_ID" with actual Hugging Face Token. Alternatively, set `hugging-face-token` to the token value inside `inference-config.cfg`.
+Export the Hugging Face token as an environment variable by replacing "Your_Hugging_Face_Token_ID" with actual Hugging Face Token and run the automation script using the configured files.
+
 ```bash
 export HUGGINGFACE_TOKEN=<<Your_Hugging_Face_Token_ID>>
-
-**Now run the automation using the configured files.**
 
 cd core
 chmod +x inference-stack-deploy.sh
@@ -72,7 +71,7 @@ chmod +x inference-stack-deploy.sh
 ./inference-stack-deploy.sh --cpu-or-gpu "cpu" --hugging-face-token $HUGGINGFACE_TOKEN
 ```
 
-Select Option 1 and confirm the Yes/No prompt.
+**Select Option 1 and confirm the Yes/No prompt.**
 
 This will deploy the setup automatically. If any issues are encountered, double-check the prerequisites and configuration files
 
