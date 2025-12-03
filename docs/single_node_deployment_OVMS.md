@@ -50,7 +50,9 @@ cd Enterprise-Inference
 cp -f docs/examples/single-node/inference-config.cfg core/inventory/inference-config.cfg
 ```
 
-Modify `inference-config.cfg` if needed. Ensure the `cluster_url` field is set to the DNS used, and the paths to the certificate and key files are valid. The keycloak fields and deployment options can be left unchanged. For systems behind a proxy, refer to the [proxy guide](./running-behind-proxy.md).
+Modify `inference-config.cfg` and set deploy_llm_models variable to off as shown below 
+*deploy_llm_models=off*
+ Ensure the `cluster_url` field is set to the DNS used, and the paths to the certificate and key files are valid. The keycloak fields and deployment options can be left unchanged. For systems behind a proxy, refer to the [proxy guide](./running-behind-proxy.md).
 
 ### Step 2: Update `hosts.yaml` File
 Copy the single node preset hosts config file to the working directory:
@@ -61,53 +63,142 @@ cp -f docs/examples/single-node/hosts.yaml core/inventory/hosts.yaml
 
 > **Note** The `ansible_user` field is set to *ubuntu* by default. Change it to the actual username used. 
 
-### Step 3: Run the Automation
-Now run the automation using the configured files.
-```bash
-cd core
-chmod +x inference-stack-deploy.sh
-```
-
- Export the Hugging Face token as an environment variable by replacing "Your_Hugging_Face_Token_ID" with actual Hugging Face Token. Alternatively, set `hugging-face-token` to the token value inside `inference-config.cfg`.
+Export the Hugging Face token as an environment variable by replacing "Your_Hugging_Face_Token_ID" with actual Hugging Face Token. Alternatively, set `hugging-face-token` to the token value inside `inference-config.cfg`.
 ```bash
 export HUGGINGFACE_TOKEN=<<Your_Hugging_Face_Token_ID>>
 ```
+### Step 3: Navigate to the Helm Chart Directory
 
-Follow the steps below depending on the hardware platform. The `models` argument can be excluded and there will be a prompt to select from a [list of models](./supported-models.md).
-
-#### CPU only
-Run the command below to deploy the Llama 3.1 8B parameter model on CPU.
 ```bash
-./inference-stack-deploy.sh --models "21" --cpu-or-gpu "cpu" --hugging-face-token $HUGGINGFACE_TOKEN
-```
-#### Intel® Gaudi® AI Accelerators
-
-> **📝 Note**: If you're using Intel® Gaudi® AI Accelerators, ensure firmware and drivers are up to date using the [automated setup scripts](./gaudi-prerequisites.md#automated-installationupgrade-process) before deployment.
-
-Run the command below to deploy the Llama 3.1 8B parameter model on Intel® Gaudi®. For Gaudi 3, set `cpu-or-gpu` to `gaudi3` instead.
-```bash
-./inference-stack-deploy.sh --models "1" --cpu-or-gpu "gpu" --hugging-face-token $HUGGINGFACE_TOKEN
+cd Enterprise-Inference/core/helm-charts/ovms/
 ```
 
-Select Option 1 and confirm the Yes/No prompt.
+### Step 4: Edit the `values.yaml` File
 
-This will deploy the setup automatically. If any issues are encountered, double-check the prerequisites and configuration files.
+Open the `values.yaml` file and configure the following parameters:
 
-### Step 4: Testing Inference
-On the node run the following commands to test if Intel® AI for Enterprise Inference is successfully deployed:
+#### OIDC Configuration
 
-If using Keycloak, generate a token using the script `generate-token.sh`. Ensure the values of the variables match what is set in `inference-config.cfg`. This will also set the environment variable `TOKEN` used in the next step.
+Configure OpenID Connect authentication with your Keycloak instance:
+
+```yaml
+oidc:
+  enabled: true
+  realm: master
+  clientId: "your-client-id"                    # Update this using below steps mentioned in NOTE section
+  clientSecret: "your-client-secret"            # Update this using below steps mentioned in NOTE section
+  discovery: "http://keycloak.default.svc.cluster.local/realms/master/.well-known/openid-configuration"
+  introspectionEndpoint: "http://keycloak.default.svc.cluster.local/realms/master/protocol/openid-connect/token/introspect"
+
+NOTE: you can get clientId and clientSecret as shown below
+
+export KEYCLOAK_CLIENT_ID=my-client-id # The client ID to be created in Keycloak as menitoned in your inference-config.cfg file in step 3
+export KEYCLOAK_CLIENT_SECRET=$(bash "${SCRIPT_DIR}/keycloak-fetch-client-secret.sh" ${KEYCLOAK_URL} ${KEYCLOAK_ADMIN_USERNAME} ${KEYCLOAK_PASSWORD} ${KEYCLOAK_CLIENT_ID} | awk -F': ' '/Client secret:/ {print $2}')
+
+echo $KEYCLOAK_CLIENT_ID         # this will print your keycloak client ID that can be used in above OIDC configuration
+echo $KEYCLOAK_CLIENT_SECRET     # this will print your keycloak client secret that can be used in above OIDC configuration
+
+#### Host Configuration
+
+Set your domain/hostname:
+
+```yaml
+apisixRoute:
+  enabled: true
+  namespace: default
+  name: ""
+  host: "api.example.com"  # Update this
+
+ingress:
+  enabled: true
+  className: nginx
+  namespace: auth-apisix
+  host: "api.example.com"  # Update this (same as above)
+  secretname: ""  # Update this (your TLS secret name)
+```
+---
+
+## Deployment
+
+Below are the pre-tested models and the respective Helm commands to deploy
+
+For Deploying `Qwen3-4B-int4-ov` model:
 ```bash
-source scripts/generate-token.sh
+helm install qwen3-4b . --set modelSource="OpenVINO/Qwen3-4B-int4-ov" --set modelName="qwen3-4b"
+```
+For Deploying `Phi-3.5-mini-instruct-int4-cw-ov` model:
+```bash
+helm install phi-3-5-mini . --set modelSource="OpenVINO/Phi-3.5-mini-instruct-int4-cw-ov" --set modelName="phi-3-5-mini"
+```
+For Deploying `Mistral-7B-Instruct-v0.3-int4-cw-ov` model:
+```bash
+helm install mistral-7b . --set modelSource="OpenVINO/Mistral-7B-Instruct-v0.3-int4-cw-ov" --set modelName="mistral-7b"
 ```
 
-To test on CPU only. Note `vllmcpu` is appended to the URL.
-```bash
-curl -k ${BASE_URL}/Llama-3.1-8B-Instruct-vllmcpu/v1/completions -X POST -d '{"model": "meta-llama/Llama-3.1-8B-Instruct", "prompt": "What is Deep Learning?", "max_tokens": 25, "temperature": 0}' -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN"
+**Note:** Model download may take 5-10 minutes depending on model size and network speed.
 
-To test on Intel® Gaudi® AI Accelerators:
-```bash
-curl -k ${BASE_URL}/Llama-3.1-8B-Instruct/v1/completions -X POST -d '{"model": "meta-llama/Llama-3.1-8B-Instruct", "prompt": "What is Deep Learning?", "max_tokens": 25, "temperature": 0}' -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN"
+### Accessing the deployed models and testing
 
-## Post-Deployment
-With the deployed model on the server, refer to the [post-deployment instructions](./README.md#post-deployment) for options.
+First, obtain an access token:
+
+```bash
+export CLIENTID=$KEYCLOAK_CLIENT_ID 
+export CLIENT_SECRET=$KEYCLOAK_CLIENT_SECRET
+export TOKEN_URL=https://${BASE_URL}/token
+export TOKEN=$(curl -k -X POST ${TOKEN_URL} -H 'Content-Type: application/x-www-form-urlencoded' -d "grant_type=client_credentials&client_id=${CLIENTID}&client_secret=${CLIENT_SECRET}" | jq -r .access_token)
+
+echo "Access Token: $TOKEN"
+```
+
+### Test via External URL (with Authentication)
+
+```bash
+# Test chat completions endpoint
+For Inferencing with Qwen3-4B-int4-ov:
+curl -k ${BASE_URL}/qwen3-4b-ovms/v1/completions -X POST -d '{"messages": [{"role": "system","content": "You are helpful assistant"},{"role": "user","content": "what is photosynthesis"}],"model": "qwen3-4b","max_tokens": 32,"temperature": 0.4}' -H 'Content-Type: application/json' -sS -H "Authorization: Bearer $TOKEN"
+
+For Inferencing with Phi-3.5-mini-instruct-int4-cw-ov:
+curl -k ${BASE_URL}/phi-3-5-mini-ovms/v3/chat/completions -X POST -d '{"messages": [{"role": "system","content": "You are helpful assistant"},{"role": "user","content": "what is api"}],"model": "phi-3-5-mini","max_tokens": 32,"temperature": 0.4}' -H 'Content-Type: application/json' -sS -H "Authorization: Bearer $TOKEN"
+
+For Inferencing with Mistral-7B-Instruct-v0.3-int4-cw-ov:
+curl -k ${BASE_URL}/mistral-7b-ovms/v3/chat/completions -X POST -d '{"messages": [{"role": "system","content": "You are helpful assistant"},{"role": "user","content": "what is photosynthesis"}],"model": "mistral-7b","max_tokens": 32,"temperature": 0.4}' -H 'Content-Type: application/json' -sS -H "Authorization: Bearer $TOKEN"
+
+```
+---
+## Undeployment
+
+### Complete Removal
+
+To completely remove the deployment:
+
+```bash
+# Uninstall the Helm release
+helm uninstall qwen3-ovms
+
+# Verify removal
+helm list
+kubectl get pods -l app=ovms-model-server
+kubectl get svc -l app=ovms-model-server
+kubectl get apisixroute -n default
+kubectl get ingress -n auth-apisix
+```
+
+## Advanced Configuration
+
+### Deploy Multiple Models
+
+To deploy multiple models, use different release names:
+
+```bash
+# Deploy Qwen3-8B
+helm install qwen3-8b . \
+  --set modelSource="OpenVINO/Qwen3-8B-int4-ov" \
+  --set modelName="qwen3-8b" \
+  --set apisixRoute.host="qwen-inference.example.com"
+
+# Deploy Qwen3-4B
+helm install qwen3-4b . \
+  --set modelSource="OpenVINO/Qwen3-4B-int4-ov" \
+  --set modelName="qwen3-4b" \
+  --set apisixRoute.host="qwen4b-inference.example.com"
+```
