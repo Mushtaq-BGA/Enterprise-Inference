@@ -47,7 +47,10 @@ cd Enterprise-Inference
 cp -f docs/examples/single-node/inference-config.cfg core/inventory/inference-config.cfg
 ```
 
-**Modify `inference-config.cfg` and set deploy_llm_models variable to off like this -> deploy_llm_models=off**
+### Step4: Modify `inference-config.cfg` and set deploy_llm_models variable to off like this 
+
+nano ~Enterprise-Inference/core/inventory/inference-config.cfg
+**deploy_llm_models=off**
 
 Ensure the `cluster_url` field is set to the DNS used, and the paths to the certificate and key files are valid. The keycloak fields and deployment options can be left unchanged. For systems behind a proxy, refer to the [proxy guide](./running-behind-proxy.md).
 
