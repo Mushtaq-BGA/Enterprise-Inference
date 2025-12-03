@@ -65,7 +65,7 @@ Export the Hugging Face token as an environment variable by replacing "Your_Hugg
 export HUGGINGFACE_TOKEN=<<Your_Hugging_Face_Token_ID>>
 
 Now run the automation using the configured files.
-```bash
+
 cd core
 chmod +x inference-stack-deploy.sh
 ```
